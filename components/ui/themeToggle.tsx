@@ -28,7 +28,6 @@ export default function ThemeToggle() {
         relative
         w-10
         h-10
-        mr-4
         flex
         items-center
         justify-center

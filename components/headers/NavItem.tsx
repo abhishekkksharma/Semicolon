@@ -31,7 +31,7 @@ export default function NavItem({
       
       rounded-full
       font-semibold
-      text-base
+      text-sm
       whitespace-nowrap /* Prevents text wrapping if you add lots of tabs */
       
       transition-colors /* Changed from transition-all to avoid conflicting with Framer Motion */

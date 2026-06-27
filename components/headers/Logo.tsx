@@ -13,15 +13,6 @@ function Logo({
       href={href}
       className={`inline-flex items-center gap-3 select-none ${className}`}
     >
-      <Image
-        src={LogoImg}
-        alt="KnowMo"
-        width={size}
-        height={size}
-        priority
-        className="object-contain rounded-xl"
-      />
-
       {showText && (
         <h1
           className="font-extrabold tracking-tight leading-none"

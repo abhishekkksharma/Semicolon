@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Home, Menu, X, ChevronDown, LogOut } from "lucide-react";
+import { Home, Menu, X, ChevronDown, LogOut, Search } from "lucide-react";
 import NavItem from "./NavItem";
 import ThemeToggle from "../ui/themeToggle";
 import Logo from "../headers/Logo"
@@ -12,6 +12,7 @@ import SearchBar from "./SearchBar";
 export default function Navbar() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [expandedMobileMenu, setExpandedMobileMenu] = useState<string | null>(null);
 
   // Prevent background scrolling when mobile menu is open
@@ -62,56 +63,77 @@ export default function Navbar() {
 
   return (
     <>
-      <Logo/>
-      {/* Main Desktop Navbar Shell */}
-      <nav
-        className="
-        fixed top-6 left-1/2 -translate-x-1/2
-        w-[92%] sm:w-[85%] md:w-[75%] lg:w-[60%] max-w-3xl
-        bg-white/50 dark:bg-zinc-950/50 backdrop-blur-xl
-        rounded-full border-2 border-white/40 dark:border-zinc-800/60
-        shadow-[0_12px_40px_rgba(0,0,0,0.08)]
-        p-1.5 z-[60]
-        transition-all duration-300
-        "
-      >
-        <div className="flex items-center justify-between gap-1.5 w-full px-2">
-          {/* Logo / Brand space for mobile */}
-          <span className="text-sm font-semibold md:hidden px-3 text-zinc-900 dark:text-zinc-100">
-            Menu
-          </span>
-
-          {/* Desktop NavItems */}
-          <div className="hidden md:flex items-center gap-1.5 flex-1 justify-start relative">
-            {navLinks.map((link) => (
-              <NavItem
-                key={link.href}
-                label={link.label}
-                href={link.href}
-                active={isActive(link.href)}
-                icon={link.icon}
-                dropdown={link.dropdown}
-              />
-            ))}
-          </div>
-
-          <div className="flex items-center gap-2">
-            <ThemeToggle />
-
-            {/* Mobile Hamburger Toggle */}
-            <button
-              onClick={() => setIsOpen(true)}
-              className="md:hidden p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-zinc-800 dark:text-zinc-200"
-              aria-label="Open Menu"
-              >
-              <Menu size={20} />
-            </button>
-          </div>
+      {/* Unified Header Wrapper */}
+      <div className="fixed top-4 left-0 right-0 w-full md:px-20 h-14 flex items-center justify-between z-[60] pointer-events-none">
+        
+        {/* Desktop Logo (Left) */}
+        <div className="hidden md:flex items-center justify-start w-60 pointer-events-auto">
+          <Logo size={40} />
         </div>
-      </nav>
-      <div className="fixed top-6 right-10">
 
-              <SearchBar />
+        {/* Main Desktop/Mobile Navbar Shell (Center) */}
+        <nav
+          className="
+          bg-white/50 dark:bg-zinc-950/50 backdrop-blur-xl
+          rounded-full border-2 border-white/40 dark:border-zinc-800/60
+          shadow-[0_12px_40px_rgba(0,0,0,0.08)]
+          p-1.5 pointer-events-auto
+          transition-all duration-300
+          w-[92%] sm:w-[85%] md:w-auto mx-auto md:mx-0
+          "
+        >
+          <div className="flex items-center justify-between gap-1.5 w-full px-2">
+            {/* Logo / Brand space for mobile */}
+            <Logo size={28} className="md:hidden pl-2" />
+
+            {/* Desktop NavItems */}
+            <div className="hidden md:flex items-center gap-1.5 flex-1 justify-start relative">
+              {navLinks.map((link) => (
+                <NavItem
+                  key={link.href}
+                  label={link.label}
+                  href={link.href}
+                  active={isActive(link.href)}
+                  icon={link.icon}
+                  dropdown={link.dropdown}
+                />
+              ))}
+            </div>
+
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              {/* Mobile Search Button */}
+              <button
+                onClick={() => setIsSearchOpen(true)}
+                className="md:hidden w-10 h-10 flex items-center justify-center rounded-full text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100/50 dark:hover:bg-zinc-800/40 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors"
+                aria-label="Search"
+              >
+                <Search size={20} />
+              </button>
+
+              <ThemeToggle />
+
+              {/* Mobile Hamburger Toggle */}
+              <button
+                onClick={() => setIsOpen(true)}
+                className="md:hidden p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-zinc-800 dark:text-zinc-200"
+                aria-label="Open Menu"
+              >
+                <Menu size={20} />
+              </button>
+            </div>
+          </div>
+        </nav>
+
+        {/* Desktop SearchBar (Right) */}
+        <div className="hidden md:flex items-center justify-end w-60 pointer-events-auto">
+          <SearchBar open={isSearchOpen} setOpen={setIsSearchOpen} />
+        </div>
+
+      </div>
+
+      {/* Mobile Search Overlay/Modal handler */}
+      <div className="md:hidden">
+        <SearchBar open={isSearchOpen} setOpen={setIsSearchOpen} />
       </div>
 
       {/* --- MOBILE OFF-CANVAS MENU --- */}

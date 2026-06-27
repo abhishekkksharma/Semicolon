@@ -3,9 +3,17 @@
 import { useEffect, useState } from "react";
 import { Search, X, Clock3, ArrowRight } from "lucide-react";
 
-export default function SearchBar() {
-  const [open, setOpen] = useState(false);
+interface SearchBarProps {
+  open?: boolean;
+  setOpen?: (open: boolean) => void;
+}
+
+export default function SearchBar({ open: controlledOpen, setOpen: controlledSetOpen }: SearchBarProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
   const [query, setQuery] = useState("");
+
+  const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
+  const setOpen = controlledSetOpen !== undefined ? controlledSetOpen : setInternalOpen;
 
   const recentSearches = [
     "Problem Solving",
@@ -42,43 +50,46 @@ export default function SearchBar() {
           hidden md:flex
           items-center
           justify-between
-          w-80
-          h-14
-          px-5
-          rounded-3xl
-          border-2
+          w-60
+          h-10
+          px-4
+          rounded-full
+          border
           border-zinc-200
           dark:border-zinc-800
           bg-white/90
           dark:bg-zinc-950/90
           backdrop-blur-sm
-          hover:border-emerald-300
-          dark:hover:border-emerald-700
+          hover:border-zinc-500
+          dark:hover:border-zinc-700
           transition-all
           duration-200
         "
       >
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           <Search
-            size={24}
+            size={18}
             className="text-zinc-500"
           />
 
-          <span className="text-xl font-semibold text-zinc-500">
-            Search
+          <span className="text-sm font-medium text-zinc-500">
+            Search...
           </span>
         </div>
 
         <kbd
           className="
-            rounded-xl
+            rounded-md
             bg-zinc-100
             dark:bg-zinc-900
-            px-3
-            py-1.5
-            text-sm
+            px-1.5
+            py-0.5
+            text-[10px]
             font-semibold
-            text-zinc-500
+            text-zinc-400
+            border
+            border-zinc-200/50
+            dark:border-zinc-800/50
           "
         >
           Ctrl K
