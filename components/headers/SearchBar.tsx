@@ -8,20 +8,38 @@ interface SearchBarProps {
   setOpen?: (open: boolean) => void;
 }
 
-export default function SearchBar({ open: controlledOpen, setOpen: controlledSetOpen }: SearchBarProps) {
+const STORAGE_KEY = "recentSearches";
+
+export default function SearchBar({
+  open: controlledOpen,
+  setOpen: controlledSetOpen,
+}: SearchBarProps) {
   const [internalOpen, setInternalOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
 
-  const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
-  const setOpen = controlledSetOpen !== undefined ? controlledSetOpen : setInternalOpen;
+  const open =
+    controlledOpen !== undefined ? controlledOpen : internalOpen;
 
-  const recentSearches = [
-    "Problem Solving",
-    "Spring Boot",
-    "DBMS",
-    "Operating Systems",
-  ];
+  const setOpen =
+    controlledSetOpen !== undefined
+      ? controlledSetOpen
+      : setInternalOpen;
 
+  // Load searches
+  useEffect(() => {
+    const stored = localStorage.getItem(STORAGE_KEY);
+
+    if (stored) {
+      try {
+        setRecentSearches(JSON.parse(stored));
+      } catch {
+        setRecentSearches([]);
+      }
+    }
+  }, []);
+
+  // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
@@ -39,7 +57,44 @@ export default function SearchBar({ open: controlledOpen, setOpen: controlledSet
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, []);
+  }, [setOpen]);
+
+  const saveSearch = (searchTerm: string) => {
+    const term = searchTerm.trim();
+
+    if (!term) return;
+
+    const updated = [
+      term,
+      ...recentSearches.filter(
+        (item) =>
+          item.toLowerCase() !== term.toLowerCase()
+      ),
+    ].slice(0, 5);
+
+    setRecentSearches(updated);
+
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify(updated)
+    );
+  };
+
+  const clearRecentSearches = () => {
+    localStorage.removeItem(STORAGE_KEY);
+    setRecentSearches([]);
+  };
+
+  const handleSearch = () => {
+    if (!query.trim()) return;
+
+    saveSearch(query);
+
+    // Add your actual search logic here
+    console.log("Searching:", query);
+
+    setOpen(false);
+  };
 
   return (
     <>
@@ -146,6 +201,11 @@ export default function SearchBar({ open: controlledOpen, setOpen: controlledSet
                   onChange={(e) =>
                     setQuery(e.target.value)
                   }
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      handleSearch();
+                    }
+                  }}
                   placeholder="Search notes, departments, resources..."
                   className="
                     flex-1
@@ -192,42 +252,60 @@ export default function SearchBar({ open: controlledOpen, setOpen: controlledSet
                     RECENT
                   </div>
 
-                  <button className="text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100">
-                    Clear
-                  </button>
+                  {recentSearches.length > 0 && (
+                    <button
+                      onClick={clearRecentSearches}
+                      className="text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+                    >
+                      Clear
+                    </button>
+                  )}
                 </div>
 
                 <div className="space-y-1">
-                  {recentSearches.map((item) => (
-                    <button
-                      key={item}
-                      className="
-                        flex
-                        w-full
-                        items-center
-                        justify-between
-                        rounded-xl
-                        px-3
-                        py-3
-                        transition
-                        hover:bg-zinc-100
-                        dark:hover:bg-zinc-900
-                      "
-                    >
-                      <div className="flex items-center gap-3">
-                        <Search
-                          size={16}
-                          className="text-zinc-500"
-                        />
-                        <span>{item}</span>
-                      </div>
+                  {recentSearches.length > 0 ? (
+                    recentSearches.map(
+                      (item, index) => (
+                        <button
+                          key={index}
+                          onClick={() => {
+                            setQuery(item);
+                            saveSearch(item);
+                          }}
+                          className="
+                            flex
+                            w-full
+                            items-center
+                            justify-between
+                            rounded-xl
+                            px-3
+                            py-3
+                            transition
+                            hover:bg-zinc-100
+                            dark:hover:bg-zinc-900
+                          "
+                        >
+                          <div className="flex items-center gap-3">
+                            <Search
+                              size={16}
+                              className="text-zinc-500"
+                            />
 
-                      <ArrowRight
-                        size={16}
-                        className="text-zinc-500"
-                      />
-                    </button>
-                  ))}
+                            <span>{item}</span>
+                          </div>
+
+                          <ArrowRight
+                            size={16}
+                            className="text-zinc-500"
+                          />
+                        </button>
+                      )
+                    )
+                  ) : (
+                    <div className="py-8 text-center text-sm text-zinc-500">
+                      No recent searches
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

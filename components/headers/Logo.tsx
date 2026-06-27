@@ -22,6 +22,7 @@ function Logo({
         >
           <span className="text-zinc-500 dark:text-zinc-400">Know</span>
           <span className="text-zinc-900 dark:text-zinc-100">Mo</span>
+          <span className="text-pink-600">.</span>
         </h1>
       )}
     </Link>
