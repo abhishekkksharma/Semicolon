@@ -1,6 +1,7 @@
-import dotenv from "dotenv";
-import app from "./app";
-import { connectToMongoDB } from "./connectMongo";
+const dotenv = require("dotenv");
+const app = require("./app");
+const { connectToMongoDB } = require("./connectMongo");
+
 
 dotenv.config();
 
@@ -14,3 +15,5 @@ app.listen(PORT, () => {
 connectToMongoDB(MONGODB_URL).then(() => {
   console.log("MongoDB connected!");
 });
+
+export {};

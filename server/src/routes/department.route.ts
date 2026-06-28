@@ -1,11 +1,9 @@
 import { Router } from "express";
-const {handleGetDepartments} = require("../controllers/departments")
+
+const { handleGetDepartments } = require("../controllers/departments");
 
 const router = Router();
-console.log(handleGetDepartments);
 
-router.get("/",handleGetDepartments);
-// router.post("/")
+router.get("/", handleGetDepartments);
 
-
-export default router;
+module.exports = router;

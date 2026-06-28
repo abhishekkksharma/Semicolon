@@ -12,4 +12,4 @@ router.get("/", (req, res) => {
 router.post("/signup",handleUserSignup);
 
 
-export default router;
+module.exports = router;

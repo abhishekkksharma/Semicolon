@@ -15,6 +15,6 @@ async function handleGetDepartments(
   }
 }
 
-module.exports ={
+module.exports = {
     handleGetDepartments,
 }
