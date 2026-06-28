@@ -25,12 +25,12 @@ export default function ContentBlock({
     >
       {/* Image Container */}
       <div className="w-full md:w-1/2 flex justify-center">
-        <div className="relative w-full max-w-md aspect-video md:aspect-square">
+        <div className="relative w-full max-w-md aspect-square md:aspect-square">
           <Image
             src={imageUrl}
             alt={imageAlt}
             fill
-            className="md:object-cover object-contain"
+            className="md:object-cover object-contain "
             sizes="(max-width: 768px) 100vw, 50vw"
           />
         </div>

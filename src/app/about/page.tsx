@@ -1,14 +1,16 @@
 "use client"
 
 import ContentBlock from '../../../components/about/ContentBlock'; // Adjust path as needed
-import Image from "../../../assets/image.png"
-import Image2 from "../../../assets/image2.png"
+import Image from "../../../assets/about/image.png"
+import Image2 from "../../../assets/about/image2.png"
+import Image3 from "../../../assets/about/image3.png"
+import Footer from "../../../components/footer/footer"
 
 export default function AboutPage() {
   return (
     <main className="min-h-screen">
       {/* Container to restrict max width and center the content */}
-      <div className="max-w-5xl mx-auto px-10 py-24 mt-6 md:py-40">
+      <div className="max-w-5xl mx-auto md:px-10 px-5 py-24 mt-6 md:py-40">
 
         {/* Separate Headings Section */}
         <header className="mb-24">
@@ -37,6 +39,7 @@ export default function AboutPage() {
           imagePosition="right"
           imageUrl={Image2}// Replace with your image path
           imageAlt="Person juggling tasks"
+          
           text={
             <>
               {/* If your are reading this you're probably at the right place. The KnowMo. (Know More) is actually a late night thought turning into a platform for students like us who hate to right notes in classes but also thurst for the study content last minutes. */}
@@ -50,8 +53,28 @@ export default function AboutPage() {
 
           }
         />
+        <ContentBlock
+          imagePosition="left"
+          imageUrl={Image3}// Replace with your image path
+          imageAlt="Collaboration"
+          text={
+            <>
+              <p>
+                If you also faced issues while preparing for your upcoming STs or
+                End-Terms, you may know the struggle of finding content from toppers and
+                asking them to share it.
+              </p>
 
+              <p>
+                Now you know the problem, and it would be great if you shared your
+                resources.
+              </p>
+            </>
+
+          }
+        />
       </div>
+      <Footer />
     </main>
   );
 }

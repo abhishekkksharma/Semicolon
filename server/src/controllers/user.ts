@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 const JWT_SECRET = process.env.JWT_SECRET;
 
 
-export async function handleUserSignup(req: any, res: any) {
+async function handleUserSignup(req: any, res: any) {
   try {
     const { name, email, password, department, departmentCode, currentYear } =
       req.body;

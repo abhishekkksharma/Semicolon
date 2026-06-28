@@ -1,0 +1,1 @@
+{"version":3,"file":"connectMongo.js","sourceRoot":"","sources":["../src/connectMongo.ts"],"names":[],"mappings":";;;;;AAEA,4CAIC;AAND,wDAAgC;AAEzB,KAAK,UAAU,gBAAgB,CAAC,GAAW;IAChD,OAAO,kBAAQ,CAAC,OAAO,CAAC,GAAG,EAAE;QAC3B,MAAM,EAAE,QAAQ;KACjB,CAAC,CAAC;AACL,CAAC"}
