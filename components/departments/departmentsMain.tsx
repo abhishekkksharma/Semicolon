@@ -8,7 +8,6 @@ interface Department {
   _id: string;
   name: string;
   description: string;
-  image?: string;
   totalSubjects?: number;
   departmentCode: string;
 }
@@ -97,7 +96,7 @@ function DepartmentMain() {
           text-zinc-400 transition-colors
           group-hover:text-zinc-600
           dark:group-hover:text-zinc-300
-          "   
+          "
           />
 
           <input
@@ -154,10 +153,6 @@ function DepartmentMain() {
               name={department.name}
               description={department.description}
               departmentCode={department.departmentCode}
-              image={
-                department.image ||
-                "https://cdn-icons-png.flaticon.com/512/2721/2721297.png"
-              }
               totalSubjects={department.totalSubjects || 0}
             />
           ))}
