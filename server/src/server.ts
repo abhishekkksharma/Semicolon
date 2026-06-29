@@ -5,7 +5,7 @@ const { connectToMongoDB } = require("./connectMongo");
 
 dotenv.config();
 
-const PORT = Number(process.env.PORT);
+const PORT = Number(process.env.PORT) || 3000;
 const MONGODB_URL:string = process.env.MONGODB_URL as string;
 
 app.listen(PORT, () => {
