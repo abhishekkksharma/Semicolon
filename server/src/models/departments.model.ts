@@ -4,13 +4,13 @@ export interface IDepartment extends Document {
   name: string;
   departmentCode: string;
 
-  description: string;
+  description?: string;
 
   yearsOfDegree: number;
 
-  totalSearches: number;
-  totalResources: number;
-  totalSubjects: number;
+  totalSearches?: number;
+  totalResources?: number;
+  totalSubjects?: number;
 
   subjects?: string[];
 
@@ -19,7 +19,7 @@ export interface IDepartment extends Document {
   image?: string;
   banner?: string;
 
-  isActive: boolean;
+  isActive?: boolean;
 }
 
 const departmentSchema = new Schema<IDepartment>(
