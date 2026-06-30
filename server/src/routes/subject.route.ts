@@ -4,6 +4,6 @@ const { handleAddNewSubject,handleGetSubjects } = require("../controllers/subjec
 const router = Router();
 
 router.post("/", handleAddNewSubject);
-router.get("/",handleGetSubjects);
+router.get("/:departmentCode", handleGetSubjects);
 
 module.exports = router;

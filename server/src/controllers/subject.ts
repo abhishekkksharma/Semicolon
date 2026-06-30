@@ -77,13 +77,24 @@ async function handleAddNewSubject(
   }
 }
 
-async function handleGetSubjects(req:Request,res:Response) {
+async function handleGetSubjects(
+    req: Request<{ departmentCode: string }>,
+    res: Response
+) {
     try {
-        const departmentCode = req.params;
+        const { departmentCode } = req.params;
+
+        const subjects = await Subject.find({ departmentCode });
+
+        return res.status(200).json({ subjects });
     } catch (error) {
-        
+        console.error(error);
+        return res.status(500).json({
+            message: "Failed to fetch subjects",
+        });
     }
 }
+
 module.exports={
     handleAddNewSubject,
     handleGetSubjects
