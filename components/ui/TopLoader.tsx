@@ -49,58 +49,134 @@ export function TopLoaderProvider({
   const [visible, setVisible] = useState(false);
 
   const visibleRef = useRef(visible);
+  const progressRef = useRef(progress);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const finishTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const isNavigatingRef = useRef(false);
+  const activeFetchCountRef = useRef(0);
 
   useEffect(() => {
     visibleRef.current = visible;
   }, [visible]);
 
-  const start = useCallback(() => {
-    if (visibleRef.current) return;
+  useEffect(() => {
+    progressRef.current = progress;
+  }, [progress]);
 
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
-    }
+  const updateLoadingState = useCallback(() => {
+    const shouldBeLoading = isNavigatingRef.current || activeFetchCountRef.current > 0;
 
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-    }
-
-    setVisible(true);
-    setProgress(5);
-
-    intervalRef.current = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 90) return prev;
-        return prev + (90 - prev) * 0.08;
-      });
-    }, 100);
-  }, []);
-
-  const finish = useCallback(() => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-
-    if (visibleRef.current) {
-      setProgress(100);
-
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
+    if (shouldBeLoading) {
+      // Cancel any pending finish timeout
+      if (finishTimeoutRef.current) {
+        clearTimeout(finishTimeoutRef.current);
+        finishTimeoutRef.current = null;
       }
 
-      timeoutRef.current = setTimeout(() => {
-        setVisible(false);
-        setProgress(0);
-        timeoutRef.current = null;
-      }, 300);
+      // If loader is not currently visible, start it
+      if (!visibleRef.current) {
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+          timeoutRef.current = null;
+        }
+
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+        }
+
+        setVisible(true);
+        setProgress(5);
+
+        intervalRef.current = setInterval(() => {
+          setProgress((prev) => {
+            if (prev >= 90) return prev;
+            return prev + (90 - prev) * 0.08;
+          });
+        }, 100);
+      }
+    } else {
+      // No active navigations or fetches. Schedule finishing.
+      if (finishTimeoutRef.current) {
+        clearTimeout(finishTimeoutRef.current);
+      }
+
+      finishTimeoutRef.current = setTimeout(() => {
+        finishTimeoutRef.current = null;
+
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
+
+        if (visibleRef.current) {
+          setProgress(100);
+
+          if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+          }
+
+          timeoutRef.current = setTimeout(() => {
+            setVisible(false);
+            setProgress(0);
+            timeoutRef.current = null;
+          }, 300);
+        }
+      }, 150); // 150ms delay to bridge gaps (e.g. between navigation and fetch start)
     }
   }, []);
 
+  const start = useCallback(() => {
+    isNavigatingRef.current = true;
+    updateLoadingState();
+  }, [updateLoadingState]);
+
+  const finish = useCallback(() => {
+    isNavigatingRef.current = false;
+    updateLoadingState();
+  }, [updateLoadingState]);
+
+  // Intercept window.fetch to automatically show/hide loader during data fetching
   useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const originalFetch = window.fetch;
+    window.fetch = async function (...args) {
+      const input = args[0];
+      const url = typeof input === "string"
+        ? input
+        : input instanceof URL
+          ? input.href
+          : (input && typeof input === 'object' && 'url' in input)
+            ? (input as Request).url
+            : "";
+
+      // Ignore development/HMR hot updates and other internal socket/dev connections
+      const isDevFetch = url.includes("/_next/webpack-hmr") || url.includes("hot-update");
+
+      if (isDevFetch) {
+        return originalFetch.apply(this, args);
+      }
+
+      activeFetchCountRef.current += 1;
+      updateLoadingState();
+
+      try {
+        return await originalFetch.apply(this, args);
+      } finally {
+        activeFetchCountRef.current = Math.max(0, activeFetchCountRef.current - 1);
+        updateLoadingState();
+      }
+    };
+
+    return () => {
+      window.fetch = originalFetch;
+    };
+  }, [updateLoadingState]);
+
+  useEffect(() => {
+    // Intercept clicks and pushState for navigation tracking
     const handleClick = (event: MouseEvent) => {
       try {
         const target = event.target as HTMLElement;
@@ -180,6 +256,15 @@ export function TopLoaderProvider({
       window.history.pushState = originalPushState;
     };
   }, [start]);
+
+  // Clean up timers on unmount
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      if (finishTimeoutRef.current) clearTimeout(finishTimeoutRef.current);
+    };
+  }, []);
 
   return (
     <LoaderContext.Provider value={{ start, finish }}>
