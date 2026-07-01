@@ -11,6 +11,96 @@ import {
 } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 
+// Intercept window.fetch globally at module initialization to catch initial loads/page refreshes
+let activeFetchCount = 0;
+let onFetchCountChange: ((count: number) => void) | null = null;
+
+if (typeof window !== "undefined") {
+  const originalFetch = window.fetch;
+  window.fetch = async function (...args) {
+    const input = args[0];
+    const init = args[1];
+    const url = typeof input === "string"
+      ? input
+      : input instanceof URL
+        ? input.href
+        : (input && typeof input === 'object' && 'url' in input)
+          ? (input as Request).url
+          : "";
+
+    // Ignore development/HMR hot updates and other internal socket/dev connections
+    const isDevFetch = url.includes("/_next/webpack-hmr") || url.includes("hot-update");
+
+    if (isDevFetch) {
+      return originalFetch.apply(this, args);
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const checkHeaders = (headers: any): boolean => {
+      if (!headers) return false;
+
+      if (typeof headers.get === "function") {
+        return (
+          headers.get("next-router-prefetch") === "1" ||
+          headers.get("purpose") === "prefetch" ||
+          headers.get("sec-purpose") === "prefetch" ||
+          headers.get("x-middleware-prefetch") === "1"
+        );
+      }
+
+      if (Array.isArray(headers)) {
+        return headers.some(([key, val]) => {
+          const k = String(key).toLowerCase();
+          const v = String(val).toLowerCase();
+          return (
+            (k === "next-router-prefetch" && v === "1") ||
+            (k === "purpose" && v === "prefetch") ||
+            (k === "sec-purpose" && v === "prefetch") ||
+            (k === "x-middleware-prefetch" && v === "1")
+          );
+        });
+      }
+
+      if (typeof headers === "object") {
+        return Object.entries(headers).some(([key, val]) => {
+          const k = key.toLowerCase();
+          const v = String(val).toLowerCase();
+          return (
+            (k === "next-router-prefetch" && v === "1") ||
+            (k === "purpose" && v === "prefetch") ||
+            (k === "sec-purpose" && v === "prefetch") ||
+            (k === "x-middleware-prefetch" && v === "1")
+          );
+        });
+      }
+
+      return false;
+    };
+
+    const isPrefetch =
+      (init && init.headers && checkHeaders(init.headers)) ||
+      (input instanceof Request && input.headers && checkHeaders(input.headers));
+
+    if (isPrefetch) {
+      return originalFetch.apply(this, args);
+    }
+
+    activeFetchCount += 1;
+    if (onFetchCountChange) {
+      onFetchCountChange(activeFetchCount);
+    }
+
+    try {
+      return await originalFetch.apply(this, args);
+    } finally {
+      activeFetchCount = Math.max(0, activeFetchCount - 1);
+      if (onFetchCountChange) {
+        onFetchCountChange(activeFetchCount);
+      }
+    }
+  };
+}
+
 type LoaderContextType = {
   start: () => void;
   finish: () => void;
@@ -55,7 +145,7 @@ export function TopLoaderProvider({
   const finishTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const isNavigatingRef = useRef(false);
-  const activeFetchCountRef = useRef(0);
+  const activeFetchCountRef = useRef(activeFetchCount);
 
   useEffect(() => {
     visibleRef.current = visible;
@@ -137,41 +227,23 @@ export function TopLoaderProvider({
     updateLoadingState();
   }, [updateLoadingState]);
 
-  // Intercept window.fetch to automatically show/hide loader during data fetching
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    // Sync the ref with the module-level activeFetchCount in case fetches started during mount
+    activeFetchCountRef.current = activeFetchCount;
 
-    const originalFetch = window.fetch;
-    window.fetch = async function (...args) {
-      const input = args[0];
-      const url = typeof input === "string"
-        ? input
-        : input instanceof URL
-          ? input.href
-          : (input && typeof input === 'object' && 'url' in input)
-            ? (input as Request).url
-            : "";
-
-      // Ignore development/HMR hot updates and other internal socket/dev connections
-      const isDevFetch = url.includes("/_next/webpack-hmr") || url.includes("hot-update");
-
-      if (isDevFetch) {
-        return originalFetch.apply(this, args);
-      }
-
-      activeFetchCountRef.current += 1;
+    // Register the state-updating callback globally
+    onFetchCountChange = (count) => {
+      activeFetchCountRef.current = count;
       updateLoadingState();
-
-      try {
-        return await originalFetch.apply(this, args);
-      } finally {
-        activeFetchCountRef.current = Math.max(0, activeFetchCountRef.current - 1);
-        updateLoadingState();
-      }
     };
 
+    // If there were already active fetches when the loader mounted, trigger loading state
+    if (activeFetchCountRef.current > 0) {
+      updateLoadingState();
+    }
+
     return () => {
-      window.fetch = originalFetch;
+      onFetchCountChange = null;
     };
   }, [updateLoadingState]);
 
